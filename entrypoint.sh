@@ -3,7 +3,12 @@ set -e
 
 echo "=== [RMAA GitVault Engine Initializing] ==="
 
-# Render runs rootless container; ensure app.ini path exists with install lock
+# Resolve MinIO / S3 endpoint with safe fallback to s3.huggingface.co
+S3_ENDPOINT="${GITEA__storage__MINIO_ENDPOINT:-s3.huggingface.co}"
+if [ -z "${S3_ENDPOINT}" ]; then
+  S3_ENDPOINT="s3.huggingface.co"
+fi
+
 mkdir -p /etc/gitea /data/gitea/conf
 
 cat << INI_EOF > /etc/gitea/app.ini
@@ -21,17 +26,35 @@ OFFLINE_MODE = false
 
 [database]
 DB_TYPE = ${GITEA__database__DB_TYPE:-postgres}
-HOST = ${GITEA__database__HOST}
+HOST = ${GITEA__database__HOST:-aws-0-ap-northeast-2.pooler.supabase.com:6543}
 NAME = ${GITEA__database__NAME:-postgres}
-USER = ${GITEA__database__USER}
+USER = ${GITEA__database__USER:-postgres.sjjcilrjqavsgnqjjjlz}
 PASSWD = ${GITEA__database__PASSWD}
 SSL_MODE = ${GITEA__database__SSL_MODE:-require}
 LOG_SQL = false
 
 [storage]
-STORAGE_TYPE = ${GITEA__storage__STORAGE_TYPE:-minio}
-MINIO_ENDPOINT = ${GITEA__storage__MINIO_ENDPOINT:-s3.huggingface.co}
-MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID}
+STORAGE_TYPE = minio
+MINIO_ENDPOINT = ${S3_ENDPOINT}
+MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
+MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
+MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
+MINIO_USE_SSL = true
+
+[storage.attachments]
+STORAGE_TYPE = minio
+MINIO_ENDPOINT = ${S3_ENDPOINT}
+MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
+MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
+MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
+MINIO_USE_SSL = true
+
+[storage.packages]
+STORAGE_TYPE = minio
+MINIO_ENDPOINT = ${S3_ENDPOINT}
+MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
 MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
 MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
 MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
@@ -39,6 +62,12 @@ MINIO_USE_SSL = true
 
 [lfs]
 STORAGE_TYPE = minio
+MINIO_ENDPOINT = ${S3_ENDPOINT}
+MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
+MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
+MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
+MINIO_USE_SSL = true
 
 [attachment]
 STORAGE_TYPE = minio
@@ -58,9 +87,9 @@ REQUIRE_SIGNIN_VIEW = false
 PROVIDER = memory
 INI_EOF
 
-echo "[+] Generated /etc/gitea/app.ini with INSTALL_LOCK=true"
+echo "[+] Generated /etc/gitea/app.ini with S3_ENDPOINT=${S3_ENDPOINT}"
 
-# Background Keep-Alive Self-Ping Daemon (Bypasses Render 15-minute sleep)
+# Background Keep-Alive Self-Ping Daemon
 (
   echo "[+] GitVault Keep-Alive Daemon started."
   while true; do
@@ -71,5 +100,5 @@ echo "[+] Generated /etc/gitea/app.ini with INSTALL_LOCK=true"
   done
 ) &
 
-# Launch Gitea directly with generated config to bypass installation wizard
+# Launch Gitea directly with generated config
 exec /usr/local/bin/gitea -c /etc/gitea/app.ini web
