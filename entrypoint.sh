@@ -24,7 +24,7 @@ OFFLINE_MODE = false
 
 [database]
 DB_TYPE = postgres
-HOST = ${GITEA__database__HOST:-aws-0-ap-northeast-2.pooler.supabase.com:6543}
+HOST = ${GITEA__database__HOST:-aws-0-ap-northeast-2.pooler.supabase.com:5432}
 NAME = ${GITEA__database__NAME:-postgres}
 USER = ${GITEA__database__USER:-postgres.sjjcilrjqavsgnqjjjlz}
 PASSWD = ${GITEA__database__PASSWD}
