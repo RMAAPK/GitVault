@@ -35,24 +35,66 @@ LOG_SQL = false
 
 [storage]
 STORAGE_TYPE = minio
+MINIO_ENDPOINT = ${S3_ENDPOINT}
+MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
+MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
+MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
+MINIO_USE_SSL = true
 
 [storage.minio]
 STORAGE_TYPE = minio
-ENDPOINT = ${S3_ENDPOINT}
-ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
-SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
-BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
-LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
-USE_SSL = true
+MINIO_ENDPOINT = ${S3_ENDPOINT}
+MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
+MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
+MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
+MINIO_USE_SSL = true
+
+[storage.attachments]
+STORAGE_TYPE = minio
+MINIO_ENDPOINT = ${S3_ENDPOINT}
+MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
+MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
+MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
+MINIO_USE_SSL = true
+
+[storage.packages]
+STORAGE_TYPE = minio
+MINIO_ENDPOINT = ${S3_ENDPOINT}
+MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
+MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
+MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
+MINIO_USE_SSL = true
 
 [lfs]
 STORAGE_TYPE = minio
+MINIO_ENDPOINT = ${S3_ENDPOINT}
+MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
+MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
+MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
+MINIO_USE_SSL = true
 
 [attachment]
 STORAGE_TYPE = minio
+MINIO_ENDPOINT = ${S3_ENDPOINT}
+MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
+MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
+MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
+MINIO_USE_SSL = true
 
 [packages]
 STORAGE_TYPE = minio
+MINIO_ENDPOINT = ${S3_ENDPOINT}
+MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
+MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
+MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
+MINIO_USE_SSL = true
 
 [security]
 INSTALL_LOCK = true
@@ -66,7 +108,7 @@ REQUIRE_SIGNIN_VIEW = false
 PROVIDER = memory
 INI_EOF
 
-echo "[+] Generated /etc/gitea/app.ini with [storage.minio] ENDPOINT=${S3_ENDPOINT}"
+echo "[+] Generated /etc/gitea/app.ini with MINIO_ENDPOINT=${S3_ENDPOINT}"
 
 # Background Keep-Alive Self-Ping Daemon
 (
