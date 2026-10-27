@@ -5,7 +5,9 @@ echo "=== [RMAA GitVault Engine Initializing] ==="
 
 mkdir -p /etc/gitea /data/gitea/conf /var/lib/gitea/data /var/lib/gitea/git
 
-# Generate clean Gitea app.ini backed by Supabase Postgres
+# Use port 3000 explicitly as expected by Render
+PORT="${PORT:-3000}"
+
 cat << INI_EOF > /etc/gitea/app.ini
 APP_NAME = RMAA GitVault
 RUN_USER = git
@@ -15,7 +17,8 @@ RUN_MODE = prod
 [server]
 DOMAIN = ${GITEA__server__DOMAIN:-pgit-jpw1.onrender.com}
 ROOT_URL = ${GITEA__server__ROOT_URL:-https://pgit-jpw1.onrender.com/}
-HTTP_PORT = ${PORT:-3000}
+HTTP_ADDR = 0.0.0.0
+HTTP_PORT = ${PORT}
 DISABLE_SSH = true
 OFFLINE_MODE = false
 
@@ -47,14 +50,14 @@ REQUIRE_SIGNIN_VIEW = false
 PROVIDER = memory
 INI_EOF
 
-echo "[+] Generated /etc/gitea/app.ini with Supabase Postgres & Local Git Mount"
+echo "[+] Generated /etc/gitea/app.ini with HTTP_ADDR=0.0.0.0 HTTP_PORT=${PORT}"
 
 # 1. Background Keep-Alive Self-Ping Daemon (Pings every 13 minutes)
 (
   echo "[+] GitVault Keep-Alive Daemon started."
   while true; do
     sleep 780
-    TARGET="${KEEP_ALIVE_URL:-http://127.0.0.1:3000/api/v1/version}"
+    TARGET="${KEEP_ALIVE_URL:-http://127.0.0.1:${PORT}/api/v1/version}"
     echo "[*] Keep-Alive Ping -> ${TARGET}"
     wget -qO- --timeout=15 "${TARGET}" > /dev/null 2>&1 || true
   done
