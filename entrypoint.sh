@@ -5,7 +5,6 @@ echo "=== [RMAA GitVault Engine Initializing] ==="
 
 mkdir -p /etc/gitea /data/gitea/conf /var/lib/gitea/data /var/lib/gitea/git
 
-# Use port 3000 explicitly as expected by Render
 PORT="${PORT:-3000}"
 
 cat << INI_EOF > /etc/gitea/app.ini
@@ -20,7 +19,8 @@ ROOT_URL = ${GITEA__server__ROOT_URL:-https://pgit-jpw1.onrender.com/}
 HTTP_ADDR = 0.0.0.0
 HTTP_PORT = ${PORT}
 DISABLE_SSH = true
-OFFLINE_MODE = false
+OFFLINE_MODE = true
+ENABLE_GZIP = true
 
 [database]
 DB_TYPE = postgres
@@ -30,9 +30,20 @@ USER = ${GITEA__database__USER:-postgres.sjjcilrjqavsgnqjjjlz}
 PASSWD = ${GITEA__database__PASSWD}
 SSL_MODE = require
 LOG_SQL = false
+MAX_OPEN_CONNS = 30
+MAX_IDLE_CONNS = 15
+CONN_MAX_LIFETIME = 300s
+
+[cache]
+ADAPTER = memory
+INTERVAL = 60
 
 [repository]
 ROOT = /var/lib/gitea/git/repositories
+DEFAULT_BRANCH = main
+
+[repository.pull-request]
+WORK_IN_PROGRESS_PREFIXES = WIP:,[WIP]
 
 [storage]
 STORAGE_TYPE = local
@@ -48,9 +59,12 @@ REQUIRE_SIGNIN_VIEW = false
 
 [session]
 PROVIDER = memory
+
+[cron.repo_health_check]
+SCHEDULE = @midnight
 INI_EOF
 
-echo "[+] Generated /etc/gitea/app.ini with HTTP_ADDR=0.0.0.0 HTTP_PORT=${PORT}"
+echo "[+] Generated /etc/gitea/app.ini with connection pool & in-memory cache"
 
 # 1. Background Keep-Alive Self-Ping Daemon (Pings every 13 minutes)
 (
