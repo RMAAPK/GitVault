@@ -9,6 +9,10 @@ if [ -z "${S3_ENDPOINT}" ]; then
   S3_ENDPOINT="s3.huggingface.co"
 fi
 
+# Clean bucket name: strip user prefix if present so minio-go passes strict S3 bucket validation
+RAW_BUCKET="${GITEA__storage__MINIO_BUCKET:-pgit}"
+S3_BUCKET=$(echo "${RAW_BUCKET}" | sed 's|.*/||')
+
 mkdir -p /etc/gitea /data/gitea/conf
 
 cat << INI_EOF > /etc/gitea/app.ini
@@ -38,7 +42,7 @@ STORAGE_TYPE = minio
 MINIO_ENDPOINT = ${S3_ENDPOINT}
 MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
 MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
-MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_BUCKET = ${S3_BUCKET}
 MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
 MINIO_USE_SSL = true
 
@@ -47,7 +51,7 @@ STORAGE_TYPE = minio
 MINIO_ENDPOINT = ${S3_ENDPOINT}
 MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
 MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
-MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_BUCKET = ${S3_BUCKET}
 MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
 MINIO_USE_SSL = true
 
@@ -56,7 +60,7 @@ STORAGE_TYPE = minio
 MINIO_ENDPOINT = ${S3_ENDPOINT}
 MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
 MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
-MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_BUCKET = ${S3_BUCKET}
 MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
 MINIO_USE_SSL = true
 
@@ -65,7 +69,7 @@ STORAGE_TYPE = minio
 MINIO_ENDPOINT = ${S3_ENDPOINT}
 MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
 MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
-MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_BUCKET = ${S3_BUCKET}
 MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
 MINIO_USE_SSL = true
 
@@ -74,7 +78,7 @@ STORAGE_TYPE = minio
 MINIO_ENDPOINT = ${S3_ENDPOINT}
 MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
 MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
-MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_BUCKET = ${S3_BUCKET}
 MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
 MINIO_USE_SSL = true
 
@@ -83,7 +87,7 @@ STORAGE_TYPE = minio
 MINIO_ENDPOINT = ${S3_ENDPOINT}
 MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
 MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
-MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_BUCKET = ${S3_BUCKET}
 MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
 MINIO_USE_SSL = true
 
@@ -92,7 +96,7 @@ STORAGE_TYPE = minio
 MINIO_ENDPOINT = ${S3_ENDPOINT}
 MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
 MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
-MINIO_BUCKET = ${GITEA__storage__MINIO_BUCKET:-rmaapk/pgit}
+MINIO_BUCKET = ${S3_BUCKET}
 MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
 MINIO_USE_SSL = true
 
@@ -108,7 +112,7 @@ REQUIRE_SIGNIN_VIEW = false
 PROVIDER = memory
 INI_EOF
 
-echo "[+] Generated /etc/gitea/app.ini with MINIO_ENDPOINT=${S3_ENDPOINT}"
+echo "[+] Generated /etc/gitea/app.ini with BUCKET=${S3_BUCKET}"
 
 # Background Keep-Alive Self-Ping Daemon
 (
