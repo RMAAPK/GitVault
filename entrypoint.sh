@@ -3,18 +3,9 @@ set -e
 
 echo "=== [RMAA GitVault Engine Initializing] ==="
 
-# Force S3 Endpoint directly
-S3_ENDPOINT="${GITEA__storage__MINIO_ENDPOINT:-s3.huggingface.co}"
-if [ -z "${S3_ENDPOINT}" ]; then
-  S3_ENDPOINT="s3.huggingface.co"
-fi
+mkdir -p /etc/gitea /data/gitea/conf /var/lib/gitea/data /var/lib/gitea/git
 
-# Clean bucket name: strip user prefix if present so minio-go passes strict S3 bucket validation
-RAW_BUCKET="${GITEA__storage__MINIO_BUCKET:-pgit}"
-S3_BUCKET=$(echo "${RAW_BUCKET}" | sed 's|.*/||')
-
-mkdir -p /etc/gitea /data/gitea/conf
-
+# Generate clean Gitea app.ini backed by Supabase Postgres
 cat << INI_EOF > /etc/gitea/app.ini
 APP_NAME = RMAA GitVault
 RUN_USER = git
@@ -29,76 +20,20 @@ DISABLE_SSH = true
 OFFLINE_MODE = false
 
 [database]
-DB_TYPE = ${GITEA__database__DB_TYPE:-postgres}
+DB_TYPE = postgres
 HOST = ${GITEA__database__HOST:-aws-0-ap-northeast-2.pooler.supabase.com:6543}
 NAME = ${GITEA__database__NAME:-postgres}
 USER = ${GITEA__database__USER:-postgres.sjjcilrjqavsgnqjjjlz}
 PASSWD = ${GITEA__database__PASSWD}
-SSL_MODE = ${GITEA__database__SSL_MODE:-require}
+SSL_MODE = require
 LOG_SQL = false
 
+[repository]
+ROOT = /var/lib/gitea/git/repositories
+
 [storage]
-STORAGE_TYPE = minio
-MINIO_ENDPOINT = ${S3_ENDPOINT}
-MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
-MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
-MINIO_BUCKET = ${S3_BUCKET}
-MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
-MINIO_USE_SSL = true
-
-[storage.minio]
-STORAGE_TYPE = minio
-MINIO_ENDPOINT = ${S3_ENDPOINT}
-MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
-MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
-MINIO_BUCKET = ${S3_BUCKET}
-MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
-MINIO_USE_SSL = true
-
-[storage.attachments]
-STORAGE_TYPE = minio
-MINIO_ENDPOINT = ${S3_ENDPOINT}
-MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
-MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
-MINIO_BUCKET = ${S3_BUCKET}
-MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
-MINIO_USE_SSL = true
-
-[storage.packages]
-STORAGE_TYPE = minio
-MINIO_ENDPOINT = ${S3_ENDPOINT}
-MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
-MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
-MINIO_BUCKET = ${S3_BUCKET}
-MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
-MINIO_USE_SSL = true
-
-[lfs]
-STORAGE_TYPE = minio
-MINIO_ENDPOINT = ${S3_ENDPOINT}
-MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
-MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
-MINIO_BUCKET = ${S3_BUCKET}
-MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
-MINIO_USE_SSL = true
-
-[attachment]
-STORAGE_TYPE = minio
-MINIO_ENDPOINT = ${S3_ENDPOINT}
-MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
-MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
-MINIO_BUCKET = ${S3_BUCKET}
-MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
-MINIO_USE_SSL = true
-
-[packages]
-STORAGE_TYPE = minio
-MINIO_ENDPOINT = ${S3_ENDPOINT}
-MINIO_ACCESS_KEY_ID = ${GITEA__storage__MINIO_ACCESS_KEY_ID:-rmaapk}
-MINIO_SECRET_ACCESS_KEY = ${GITEA__storage__MINIO_SECRET_ACCESS_KEY}
-MINIO_BUCKET = ${S3_BUCKET}
-MINIO_LOCATION = ${GITEA__storage__MINIO_LOCATION:-us-east-1}
-MINIO_USE_SSL = true
+STORAGE_TYPE = local
+PATH = /var/lib/gitea/data
 
 [security]
 INSTALL_LOCK = true
@@ -112,9 +47,9 @@ REQUIRE_SIGNIN_VIEW = false
 PROVIDER = memory
 INI_EOF
 
-echo "[+] Generated /etc/gitea/app.ini with BUCKET=${S3_BUCKET}"
+echo "[+] Generated /etc/gitea/app.ini with Supabase Postgres & Local Git Mount"
 
-# Background Keep-Alive Self-Ping Daemon
+# 1. Background Keep-Alive Self-Ping Daemon (Pings every 13 minutes)
 (
   echo "[+] GitVault Keep-Alive Daemon started."
   while true; do
@@ -125,5 +60,10 @@ echo "[+] Generated /etc/gitea/app.ini with BUCKET=${S3_BUCKET}"
   done
 ) &
 
-# Launch Gitea directly with generated config
+# 2. Launch Background Git-Xet / Hugging Face Private Dataset Sync Daemon
+if [ -x /usr/local/bin/gitvault-sync.sh ]; then
+  /usr/local/bin/gitvault-sync.sh &
+fi
+
+# 3. Launch Gitea Web Server directly
 exec /usr/local/bin/gitea -c /etc/gitea/app.ini web
